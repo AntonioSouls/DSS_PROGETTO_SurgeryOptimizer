@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
 // CLASSE CHE DEFINISCE LO STILE ED IL COMPORTAMENTO DELLA PAGINA PRINCIPALE DELL'APP
@@ -14,25 +16,10 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Colore sfondo
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF4F46E5), // viola
-                    Color(0xFF06B6D4), // ciano
-                  ],
-                ),
-              ),
-            ),
-          ),
           // Immagine di sfondo
           Positioned.fill(
             child: Opacity(
-              opacity: 0.4,
+              opacity: 1,
               child: Image.asset(
                 "assets/images/background.png",
                 fit: BoxFit.cover,
@@ -49,7 +36,6 @@ class HomePage extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 15), // Spazio verticale tra il bordo superiore e l'header
                 const _AppHeader(),     // Header dell'app con logo e titolo (definiti in una funzione separata)
                 // Dopo l'header, occupiamo tutto lo spazio rimanente con il contenuto principale, che è centrato e ha un padding adattivo in base alla dimensione dello schermo
                 Expanded(
@@ -86,8 +72,9 @@ class _AppHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+    return Container(
+      color: Colors.white,                      // Sfondo bianco per l'header
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),  // Padding interno per distanziare il contenuto dai bordi
       child: Row(                                 // Posiziono i vari elementi dell'header in una riga (orizzontale)
         children: [
           // Contenitore in cui inserisco il logodell'app
@@ -112,17 +99,48 @@ class _AppHeader extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 35,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
               letterSpacing: 0.4,
-              shadows: const [
-                Shadow(
-                  offset: Offset(0, 2),
-                  blurRadius: 8,
-                  color: Colors.black26,
-                ),
-              ],
-            )
+              foreground: Paint()
+                ..shader = const LinearGradient(
+                  colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
+                ).createShader(const Rect.fromLTWH(0, 0, 300, 70),),
+            ),
           ),
+
+          // Spacer per lasciare spazio alle icone
+          const Spacer(),
+
+          // Icona di GitHub
+          IconButton(
+            tooltip: "GitHub",
+            onPressed: () {
+              _openLink('https://github.com/AntonioSouls');
+            },
+            icon: const FaIcon(
+              FontAwesomeIcons.github,
+              size: 50,
+              color: Colors.black87,
+            ),
+          ),
+
+          // Spazio tra le icone
+          const SizedBox(width: 20),
+
+          // Icona di LinkedIn
+          IconButton(
+            tooltip: "LinkedIn",
+            onPressed: () {
+              _openLink('https://www.linkedin.com/in/antonio-lanza-25a342246');
+            },
+            icon: const FaIcon(
+              FontAwesomeIcons.linkedin,
+              size: 50,
+              color: Color(0xFF0A66C2),
+            ),
+          ),
+
+          // Spazio finale a destra
+          const SizedBox(width: 90),
         ],
       ),
     );
@@ -139,32 +157,78 @@ class _HeroCard extends StatelessWidget {
     final isCompact = MediaQuery.sizeOf(context).width < 600;
 
     return Card(
-      elevation: 10,
-      color: Colors.white.withValues(alpha: 0.88),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+      elevation: 40,                   // Ombreggiatura della Card per darle profondità
+      color: Colors.white,           // Sfondo bianco per la Card
+      shape: RoundedRectangleBorder(      // Bordo arrotondato
+        borderRadius: BorderRadius.circular(35),
         side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(30),   // Padding interno per distanziare il contenuto dai bordi della Card
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              'Schedula e Visualizza gli interventi per il tuo ospedale',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    height: 1.2,
-                    fontSize: isCompact ? 30 : 36,
-                  ),
+            // Titolo principale della Card, sfumato come il logo
+            ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [ Color(0xFF4F46E5), Color(0xFF06B6D4),],
+              ).createShader(bounds),
+              child: Text(
+                'Ottimizza la Programmazione degli Interventi Chirurgici',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 35,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.4,
+                  height: 1.2,
+                  color: Colors.white,          // Il colore del testo è bianco, ma sarà mascherato dal gradiente
+                ),
+              ),
             ),
+
+            // Spazio tra il titolo e la descrizione
             const SizedBox(height: 24),
+
+            // Descrizione della funzionalità dell'app, con uno stile più leggero
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'Surgery Optimizer ',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,   // grassetto
+                      letterSpacing: 0.3,
+                      height: 1.5,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  TextSpan(
+                    text:
+                        'è un’applicazione progettata per semplificare e ottimizzare la programmazione degli interventi chirurgici, migliorando l’efficienza e la gestione delle risorse ospedaliere.',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.3,
+                      height: 1.5,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            // Spazio tra la descrizione e i bottoni
+            const SizedBox(height: 30),
+
+            // Se lo schermo è stretto (mobile), i bottoni sono disposti in colonna, altrimenti in riga
             isCompact
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _PrimaryCtaButton(
+                      _CtaButtons(
                         icon: Icons.calendar_month,
                         label: 'Programmazione Mensile',
                         onPressed: () => _showSnack(
@@ -173,7 +237,7 @@ class _HeroCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _SecondaryCtaButton(
+                      _CtaButtons(
                         icon: Icons.playlist_add,
                         label: 'Inserimento Interventi',
                         onPressed: () => _showSnack(
@@ -186,7 +250,7 @@ class _HeroCard extends StatelessWidget {
                 : Row(
                     children: [
                       Expanded(
-                        child: _PrimaryCtaButton(
+                        child: _CtaButtons(
                           icon: Icons.calendar_month,
                           label: 'Programmazione Mensile',
                           onPressed: () => _showSnack(
@@ -197,7 +261,7 @@ class _HeroCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _SecondaryCtaButton(
+                        child: _CtaButtons(
                           icon: Icons.playlist_add,
                           label: 'Inserimento Interventi',
                           onPressed: () => _showSnack(
@@ -215,8 +279,10 @@ class _HeroCard extends StatelessWidget {
   }
 }
 
-class _PrimaryCtaButton extends StatelessWidget {
-  const _PrimaryCtaButton({
+
+// CLASSE CHE DEFINISCE LO STILE E IL COMPORTAMENTO DEI BOTTONI DI AZIONE
+class _CtaButtons extends StatelessWidget {
+  const _CtaButtons({
     required this.icon,
     required this.label,
     required this.onPressed,
@@ -228,48 +294,36 @@ class _PrimaryCtaButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(label),
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
+        ),
+        borderRadius: BorderRadius.circular(14),
       ),
-    );
-  }
-}
-
-class _SecondaryCtaButton extends StatelessWidget {
-  const _SecondaryCtaButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return FilledButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(label),
-      style: FilledButton.styleFrom(
-        backgroundColor: colorScheme.secondary,
-        foregroundColor: colorScheme.onSecondary,
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: FilledButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white),
+        label: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        style: FilledButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
       ),
     );
   }
 }
 
 
+// PROVVISORIA
 void _showSnack(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -277,4 +331,14 @@ void _showSnack(BuildContext context, String message) {
       behavior: SnackBarBehavior.floating,
     ),
   );
+}
+
+
+// FUNZIONE PER APRIRE UN LINK ESTERNO (UTILE PER LE ICONE DI LINKEDIN E GITHUB PRESENTI NELL'HEADER)
+Future<void> _openLink(String url) async {
+  final uri = Uri.parse(url);
+
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    throw Exception('Impossibile aprire il link: $url');
+  }
 }
