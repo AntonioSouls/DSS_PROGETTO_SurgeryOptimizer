@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+
+// CLASSE CHE DEFINISCE LO STILE ED IL COMPORTAMENTO DELLA PAGINA NOT FOUND DELL'APP
 class NotFoundPage extends StatefulWidget {
   const NotFoundPage({super.key, required this.path});
 

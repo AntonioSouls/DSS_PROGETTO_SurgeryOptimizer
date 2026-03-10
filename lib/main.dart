@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:surgery_optimizer/pages/HomePage.dart';
-import 'package:surgery_optimizer/pages/NotFoundPage.dart';
+import 'package:surgery_optimizer/pages/home_page.dart';
+import 'package:surgery_optimizer/pages/not_found_page.dart';
 
 // STARTER DELL'APP
 void main() {
