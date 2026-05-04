@@ -4,54 +4,68 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
-// CLASSE CHE DEFINISCE LO STILE ED IL COMPORTAMENTO DELLA PAGINA PRINCIPALE DELL'APP
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;   // Leggo la larghezza dello schermo per adattare il layout
-    final isMobile = width < 800;                     // Se la larghezza è inferiore a 800 pixel, considero il dispositivo come mobile
+    final width = MediaQuery.sizeOf(context).width;
+    final isMobile = width < 768;
+    final isNarrow = width < 480;
+
+    final hPadding = isNarrow
+        ? 16.0
+        : isMobile
+            ? 24.0
+            : width < 1200
+                ? 60.0
+                : 100.0;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Immagine di sfondo
           Positioned.fill(
-            child: Opacity(
-              opacity: 1,
-              child: Image.asset(
-                "assets/images/background.png",
-                fit: BoxFit.cover,
-              ),
+            child: Image.asset(
+              "assets/images/background.png",
+              fit: BoxFit.cover,
             ),
           ),
-          // Sovrapposizione semitrasparente per migliorare la leggibilità del testo
           Positioned.fill(
             child: Container(
               color: Colors.white.withValues(alpha: 0.35),
             ),
           ),
-          // Contenuto della pagina, inserito nella SafeArea per evitare sovrapposizioni con notch o barre di sistema
           SafeArea(
             child: Column(
               children: [
-                const _AppHeader(),     // Header dell'app con logo e titolo (definiti in una funzione separata)
-                // Dopo l'header, occupiamo tutto lo spazio rimanente con il contenuto principale, che è centrato e ha un padding adattivo in base alla dimensione dello schermo
+                const _AppHeader(),
                 Expanded(
-                  child: Align(
-                    alignment:
-                        isMobile ? Alignment.center : Alignment.centerRight,  // Se è mobile, centro il contenuto, altrimenti lo allineo a destra
-                    child: Padding(                                         // Padding adattivo
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 20 : 100,                   // Più spazio orizzontale su desktop, meno su mobile
-                        vertical: 24,                                     // Padding verticale costante
-                      ),
-                      child: ConstrainedBox(                                // Limitiamo la larghezza massima del contenuto per evitare che diventi troppo largo su schermi grandi
-                        constraints: const BoxConstraints(maxWidth: 700), 
-                        child: const _HeroCard(), // Card principale con titolo, descrizione e bottoni (definita in una funzione separata)
-                      ),
-                    ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Align(
+                            alignment: isMobile
+                                ? Alignment.center
+                                : Alignment.centerRight,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: hPadding,
+                                vertical: 24,
+                              ),
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 700),
+                                child: const _HeroCard(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -64,83 +78,76 @@ class HomePage extends StatelessWidget {
 }
 
 
-// CLASSE CHE DEFINISCE L'HEADER DELL'APP, CON LOGO E TITOLO
 class _AppHeader extends StatelessWidget {
   const _AppHeader();
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final isNarrow = width < 600;
+
+    final logoSize = isNarrow ? 40.0 : 50.0;
+    final titleFontSize = isNarrow ? 22.0 : 35.0;
+    final iconSize = isNarrow ? 30.0 : 44.0;
 
     return Container(
-      color: Colors.white,                      // Sfondo bianco per l'header
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),  // Padding interno per distanziare il contenuto dai bordi
-      child: Row(                                 // Posiziono i vari elementi dell'header in una riga (orizzontale)
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(
+        horizontal: isNarrow ? 16 : 24,
+        vertical: isNarrow ? 12 : 18,
+      ),
+      child: Row(
         children: [
-          // Contenitore in cui inserisco il logodell'app
           Container(
-            width: 50,
-            height: 50,
+            width: logoSize,
+            height: logoSize,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(isNarrow ? 14 : 20),
               gradient: const LinearGradient(
                 colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
               ),
             ),
             child: Icon(Icons.add_chart, color: colors.onPrimary),
           ),
-
-          // Spazio tra il logo e il titolo
-          const SizedBox(width: 15),
-          
-          // Titolo dell'app, con uno stile personalizzato
-          Text(
-            'Surgery Optimizer',
-            style: GoogleFonts.inter(
-              fontSize: 35,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.4,
-              foreground: Paint()
-                ..shader = const LinearGradient(
-                  colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
-                ).createShader(const Rect.fromLTWH(0, 0, 300, 70),),
+          SizedBox(width: isNarrow ? 10 : 15),
+          Flexible(
+            child: Text(
+              'Surgery Optimizer',
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: titleFontSize,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.4,
+                foreground: Paint()
+                  ..shader = const LinearGradient(
+                    colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
+                  ).createShader(const Rect.fromLTWH(0, 0, 300, 70)),
+              ),
             ),
           ),
-
-          // Spacer per lasciare spazio alle icone
           const Spacer(),
-
-          // Icona di GitHub
           IconButton(
             tooltip: "GitHub",
-            onPressed: () {
-              _openLink('https://github.com/AntonioSouls');
-            },
-            icon: const FaIcon(
+            onPressed: () => _openLink('https://github.com/AntonioSouls'),
+            icon: FaIcon(
               FontAwesomeIcons.github,
-              size: 50,
+              size: iconSize,
               color: Colors.black87,
             ),
           ),
-
-          // Spazio tra le icone
-          const SizedBox(width: 20),
-
-          // Icona di LinkedIn
+          SizedBox(width: isNarrow ? 4 : 16),
           IconButton(
             tooltip: "LinkedIn",
-            onPressed: () {
-              _openLink('https://www.linkedin.com/in/antonio-lanza-25a342246');
-            },
-            icon: const FaIcon(
+            onPressed: () =>
+                _openLink('https://www.linkedin.com/in/antonio-lanza-25a342246'),
+            icon: FaIcon(
               FontAwesomeIcons.linkedin,
-              size: 50,
-              color: Color(0xFF0A66C2),
+              size: iconSize,
+              color: const Color(0xFF0A66C2),
             ),
           ),
-
-          // Spazio finale a destra
-          const SizedBox(width: 90),
+          SizedBox(width: isNarrow ? 0 : 40),
         ],
       ),
     );
@@ -148,57 +155,56 @@ class _AppHeader extends StatelessWidget {
 }
 
 
-// CLASSE CHE DEFINISCE LA CARD PRINCIPALE NELLA HOME, CON TITOLO, DESCRIZIONE E BOTTONI DI AZIONE
 class _HeroCard extends StatelessWidget {
   const _HeroCard();
 
   @override
   Widget build(BuildContext context) {
-    final isCompact = MediaQuery.sizeOf(context).width < 600;
+    final width = MediaQuery.sizeOf(context).width;
+    final isNarrow = width < 480;
+    final isCompact = width < 768;
+
+    final titleSize = isNarrow ? 24.0 : isCompact ? 28.0 : 35.0;
+    final descSize = isNarrow ? 15.0 : 18.0;
 
     return Card(
-      elevation: 40,                   // Ombreggiatura della Card per darle profondità
-      color: Colors.white,           // Sfondo bianco per la Card
-      shape: RoundedRectangleBorder(      // Bordo arrotondato
+      elevation: 40,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(35),
         side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(30),   // Padding interno per distanziare il contenuto dai bordi della Card
+        padding: EdgeInsets.all(isNarrow ? 20 : 30),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Titolo principale della Card, sfumato come il logo
             ShaderMask(
               shaderCallback: (bounds) => const LinearGradient(
-                colors: [ Color(0xFF4F46E5), Color(0xFF06B6D4),],
+                colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
               ).createShader(bounds),
               child: Text(
                 'Ottimizza la Programmazione degli Interventi Chirurgici',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                  fontSize: 35,
+                  fontSize: titleSize,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.4,
                   height: 1.2,
-                  color: Colors.white,          // Il colore del testo è bianco, ma sarà mascherato dal gradiente
+                  color: Colors.white,
                 ),
               ),
             ),
-
-            // Spazio tra il titolo e la descrizione
             const SizedBox(height: 24),
-
-            // Descrizione della funzionalità dell'app, con uno stile più leggero
             Text.rich(
               TextSpan(
                 children: [
                   TextSpan(
                     text: 'Surgery Optimizer ',
                     style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,   // grassetto
+                      fontSize: descSize,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 0.3,
                       height: 1.5,
                       color: Colors.black87,
@@ -208,7 +214,7 @@ class _HeroCard extends StatelessWidget {
                     text:
                         'è un’applicazione progettata per semplificare e ottimizzare la programmazione degli interventi chirurgici, migliorando l’efficienza e la gestione delle risorse ospedaliere.',
                     style: GoogleFonts.inter(
-                      fontSize: 18,
+                      fontSize: descSize,
                       fontWeight: FontWeight.w400,
                       letterSpacing: 0.3,
                       height: 1.5,
@@ -219,11 +225,7 @@ class _HeroCard extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-
-            // Spazio tra la descrizione e i bottoni
-            const SizedBox(height: 30),
-
-            // Se lo schermo è stretto (mobile), i bottoni sono disposti in colonna, altrimenti in riga
+            SizedBox(height: isNarrow ? 20 : 30),
             isCompact
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -280,7 +282,6 @@ class _HeroCard extends StatelessWidget {
 }
 
 
-// CLASSE CHE DEFINISCE LO STILE E IL COMPORTAMENTO DEI BOTTONI DI AZIONE
 class _CtaButtons extends StatelessWidget {
   const _CtaButtons({
     required this.icon,
@@ -315,7 +316,9 @@ class _CtaButtons extends StatelessWidget {
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
     );
@@ -334,10 +337,8 @@ void _showSnack(BuildContext context, String message) {
 }
 
 
-// FUNZIONE PER APRIRE UN LINK ESTERNO (UTILE PER LE ICONE DI LINKEDIN E GITHUB PRESENTI NELL'HEADER)
 Future<void> _openLink(String url) async {
   final uri = Uri.parse(url);
-
   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
     throw Exception('Impossibile aprire il link: $url');
   }
