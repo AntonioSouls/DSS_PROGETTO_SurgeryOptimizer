@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:surgery_optimizer/pages/home_page.dart';
+import 'package:surgery_optimizer/pages/intervention_insertion_page.dart';
 import 'package:surgery_optimizer/pages/not_found_page.dart';
 
 // STARTER DELL'APP
@@ -25,9 +26,15 @@ class SurgeryOptimizer extends StatelessWidget {
         useMaterial3: true,         // Abilita il supporto per Material Design 3, che include stili e componenti aggiornati
       ),
       onGenerateRoute: (settings) {       // Gestisce la generazione delle rotte in base al nome della rotta richiesta
-        if (settings.name == '/') {            
+        if (settings.name == '/') {
           return MaterialPageRoute<void>(
             builder: (_) => const HomePage(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/interventions') {
+          return MaterialPageRoute<void>(
+            builder: (_) => const InterventionInsertionPage(),
             settings: settings,
           );
         }

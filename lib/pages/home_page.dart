@@ -242,10 +242,8 @@ class _HeroCard extends StatelessWidget {
                       _CtaButtons(
                         icon: Icons.playlist_add,
                         label: 'Inserimento Interventi',
-                        onPressed: () => _showSnack(
-                          context,
-                          'Inserimento Interventi selezionato',
-                        ),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/interventions'),
                       ),
                     ],
                   )
@@ -266,10 +264,8 @@ class _HeroCard extends StatelessWidget {
                         child: _CtaButtons(
                           icon: Icons.playlist_add,
                           label: 'Inserimento Interventi',
-                          onPressed: () => _showSnack(
-                            context,
-                            'Inserimento Interventi selezionato',
-                          ),
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/interventions'),
                         ),
                       ),
                     ],
