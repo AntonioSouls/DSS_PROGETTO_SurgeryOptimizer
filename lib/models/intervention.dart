@@ -18,4 +18,19 @@ class Intervention {
   }
 
   int get totalMinutes => hours * 60 + minutes;
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'hours': hours,
+        'minutes': minutes,
+        'compatibleRoomIds': compatibleRoomIds,
+      };
+
+  factory Intervention.fromJson(Map<String, dynamic> json) => Intervention(
+        name: json['name'] as String,
+        hours: json['hours'] as int,
+        minutes: json['minutes'] as int,
+        compatibleRoomIds:
+            (json['compatibleRoomIds'] as List).cast<int>(),
+      );
 }

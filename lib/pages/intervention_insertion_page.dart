@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/intervention.dart';
 
@@ -24,6 +27,12 @@ const List<_DeptInfo> _kDepartments = [
   _DeptInfo(id: 7, name: 'Otorinolaringoiatria',      color: Color(0xFF0D9488), icon: Icons.hearing),
 ];
 
+const List<String> _kMonths = [
+  'Gennaio', 'Febbraio', 'Marzo', 'Aprile',
+  'Maggio', 'Giugno', 'Luglio', 'Agosto',
+  'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+];
+
 class _DeptInfo {
   final int id;
   final String name;
@@ -44,30 +53,166 @@ class InterventionInsertionPage extends StatefulWidget {
 
 class _InterventionInsertionPageState
     extends State<InterventionInsertionPage> {
-  // deptId → lista interventi
   final Map<int, List<Intervention>> _interventions = {
     for (final d in _kDepartments) d.id: [],
   };
+  bool _loading = true;
+  int _selectedMonth = DateTime.now().month;
+  int _selectedYear = DateTime.now().year;
+
+  String _storageKey(int deptId) =>
+      'dept_interventions_${_selectedYear}_${_selectedMonth}_$deptId';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFromStorage();
+  }
+
+  Future<void> _loadFromStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final dept in _kDepartments) {
+      final raw = prefs.getString(_storageKey(dept.id));
+      if (raw != null) {
+        final list = (jsonDecode(raw) as List)
+            .map((e) => Intervention.fromJson(e as Map<String, dynamic>))
+            .toList();
+        _interventions[dept.id] = list;
+      }
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _reloadForPeriod() async {
+    for (final d in _kDepartments) {
+      _interventions[d.id] = [];
+    }
+    setState(() {});
+    final prefs = await SharedPreferences.getInstance();
+    for (final dept in _kDepartments) {
+      final raw = prefs.getString(_storageKey(dept.id));
+      if (raw != null) {
+        final list = (jsonDecode(raw) as List)
+            .map((e) => Intervention.fromJson(e as Map<String, dynamic>))
+            .toList();
+        _interventions[dept.id] = list;
+      }
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _saveToStorage(int deptId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = jsonEncode(
+      _interventions[deptId]!.map((e) => e.toJson()).toList(),
+    );
+    await prefs.setString(_storageKey(deptId), encoded);
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF5F7FB),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: _buildAppBar(),
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        itemCount: _kDepartments.length,
-        itemBuilder: (_, i) {
-          final dept = _kDepartments[i];
-          return _DepartmentCard(
-            dept: dept,
-            interventions: _interventions[dept.id]!,
-            onAdd: () => _openAddDialog(dept),
-            onDelete: (idx) => setState(
-              () => _interventions[dept.id]!.removeAt(idx),
+      body: Column(
+        children: [
+          _buildPeriodSelector(),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              itemCount: _kDepartments.length,
+              itemBuilder: (_, i) {
+                final dept = _kDepartments[i];
+                return _DepartmentCard(
+                  dept: dept,
+                  interventions: _interventions[dept.id]!,
+                  onAdd: () => _openAddDialog(dept),
+                  onDelete: (idx) {
+                    setState(() => _interventions[dept.id]!.removeAt(idx));
+                    _saveToStorage(dept.id);
+                  },
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    final years = List.generate(6, (i) => DateTime.now().year - 1 + i);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.calendar_month, color: Color(0xFF4F46E5), size: 20),
+          const SizedBox(width: 10),
+          Text(
+            'Periodo:',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: _selectedMonth,
+                isDense: true,
+                items: [
+                  for (int i = 0; i < 12; i++)
+                    DropdownMenuItem(
+                      value: i + 1,
+                      child: Text(
+                        _kMonths[i],
+                        style: GoogleFonts.inter(fontSize: 14),
+                      ),
+                    ),
+                ],
+                onChanged: (v) {
+                  if (v != null && v != _selectedMonth) {
+                    setState(() => _selectedMonth = v);
+                    _reloadForPeriod();
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<int>(
+              value: _selectedYear,
+              isDense: true,
+              items: [
+                for (final y in years)
+                  DropdownMenuItem(
+                    value: y,
+                    child: Text('$y', style: GoogleFonts.inter(fontSize: 14)),
+                  ),
+              ],
+              onChanged: (v) {
+                if (v != null && v != _selectedYear) {
+                  setState(() => _selectedYear = v);
+                  _reloadForPeriod();
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -264,6 +409,7 @@ class _InterventionInsertionPageState
                   );
                   Navigator.pop(ctx);
                   setState(() => _interventions[dept.id]!.add(intervention));
+                  _saveToStorage(dept.id);
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.transparent,
@@ -328,21 +474,13 @@ class _DepartmentCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(20),
+                _HeaderBadge(label: '${interventions.length} interventi'),
+                if (interventions.isNotEmpty) ...[
+                  const SizedBox(width: 6),
+                  _HeaderBadge(
+                    label: 'media ${_avgDurationLabel(interventions)}',
                   ),
-                  child: Text(
-                    '${interventions.length} interventi',
-                    style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
+                ],
               ],
             ),
           ),
@@ -398,6 +536,40 @@ class _DepartmentCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Badge header reparto ──────────────────────────────────────────────────────
+
+class _HeaderBadge extends StatelessWidget {
+  const _HeaderBadge({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+            color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+String _avgDurationLabel(List<Intervention> interventions) {
+  final avgMin =
+      interventions.fold(0, (sum, i) => sum + i.totalMinutes) ~/
+      interventions.length;
+  final h = avgMin ~/ 60;
+  final m = avgMin % 60;
+  if (h > 0 && m > 0) return '${h}h ${m}min';
+  if (h > 0) return '${h}h';
+  return '${m}min';
 }
 
 // ── Singola riga intervento ───────────────────────────────────────────────────
