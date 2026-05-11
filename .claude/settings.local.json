@@ -3,7 +3,8 @@
     "allow": [
       "Bash(flutter analyze *)",
       "Bash(flutter pub *)",
-      "Bash(grep -n \"unnecessary_brace\\\\|schedule_\\\\${\\\\|_selectedYear}\\\\|_selectedMonth}\" lib/pages/intervention_insertion_page.dart)"
+      "Bash(grep -n \"unnecessary_brace\\\\|schedule_\\\\${\\\\|_selectedYear}\\\\|_selectedMonth}\" lib/pages/intervention_insertion_page.dart)",
+      "Bash(Test-Path \"c:\\\\Users\\\\tonyp\\\\Desktop\\\\surgery_optimizer\\\\README.md\")"
     ]
   }
 }
