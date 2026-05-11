@@ -233,10 +233,8 @@ class _HeroCard extends StatelessWidget {
                       _CtaButtons(
                         icon: Icons.calendar_month,
                         label: 'Programmazione Mensile',
-                        onPressed: () => _showSnack(
-                          context,
-                          'Programmazione Mensile selezionata',
-                        ),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/scheduling'),
                       ),
                       const SizedBox(height: 12),
                       _CtaButtons(

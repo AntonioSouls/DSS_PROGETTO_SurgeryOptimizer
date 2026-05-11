@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:surgery_optimizer/pages/home_page.dart';
 import 'package:surgery_optimizer/pages/intervention_insertion_page.dart';
+import 'package:surgery_optimizer/pages/monthly_scheduling_page.dart';
 import 'package:surgery_optimizer/pages/not_found_page.dart';
 
 // STARTER DELL'APP
@@ -35,6 +36,12 @@ class SurgeryOptimizer extends StatelessWidget {
         if (settings.name == '/interventions') {
           return MaterialPageRoute<void>(
             builder: (_) => const InterventionInsertionPage(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/scheduling') {
+          return MaterialPageRoute<void>(
+            builder: (_) => const MonthlySchedulingPage(),
             settings: settings,
           );
         }
