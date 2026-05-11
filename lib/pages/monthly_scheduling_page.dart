@@ -28,14 +28,24 @@ const Map<int, Color> _kDeptColors = {
   7: Color(0xFF0D9488),
 };
 
-const Map<int, String> _kDeptAbbr = {
-  1: 'Chir. Gen.',
-  2: 'Ortopedia',
-  3: 'Ginecol.',
+const Map<int, String> _kDeptNames = {
+  1: 'Chirurgia Generale',
+  2: 'Ortopedia e Traumatologia',
+  3: 'Ginecologia',
   4: 'Urologia',
-  5: 'Neuro.',
-  6: 'Cardio.',
-  7: 'ORL',
+  5: 'Neurochirurgia',
+  6: 'Cardiochirurgia',
+  7: 'Otorinolaringoiatria',
+};
+
+const Map<int, IconData> _kDeptIcons = {
+  1: Icons.medical_services,
+  2: Icons.accessibility_new,
+  3: Icons.female,
+  4: Icons.water_drop,
+  5: Icons.psychology,
+  6: Icons.favorite,
+  7: Icons.hearing,
 };
 
 // ── Pagina principale ────────────────────────────────────────────────────────
@@ -360,6 +370,8 @@ class _CalendarGrid extends StatelessWidget {
 
     return _DayCell(
       day: day,
+      month: month,
+      year: year,
       isWeekend: col >= 5,
       blocks: dayBlocks,
     );
@@ -371,11 +383,15 @@ class _CalendarGrid extends StatelessWidget {
 class _DayCell extends StatelessWidget {
   const _DayCell({
     required this.day,
+    required this.month,
+    required this.year,
     required this.isWeekend,
     required this.blocks,
   });
 
   final int day;
+  final int month;
+  final int year;
   final bool isWeekend;
   final List<ScheduledBlock> blocks;
 
@@ -391,7 +407,6 @@ class _DayCell extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Numero del giorno
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 3, 4, 2),
             child: Text(
@@ -403,10 +418,12 @@ class _DayCell extends StatelessWidget {
               ),
             ),
           ),
-          // Blocchi interventi
           if (blocks.isNotEmpty)
-            ...blocks.map((b) => _InterventionChip(block: b)),
-          // Altezza minima quando vuota
+            ...blocks.map((b) => _InterventionChip(
+                  block: b,
+                  month: month,
+                  year: year,
+                )),
           if (blocks.isEmpty) const SizedBox(height: 44),
         ],
       ),
@@ -417,46 +434,205 @@ class _DayCell extends StatelessWidget {
 // ── Chip intervento nella cella ───────────────────────────────────────────────
 
 class _InterventionChip extends StatelessWidget {
-  const _InterventionChip({required this.block});
+  const _InterventionChip({
+    required this.block,
+    required this.month,
+    required this.year,
+  });
 
   final ScheduledBlock block;
+  final int month;
+  final int year;
 
-  @override
-  Widget build(BuildContext context) {
-    final color = _kDeptColors[block.deptId] ?? Colors.grey;
-    final abbr  = _kDeptAbbr[block.deptId]  ?? '?';
+  void _showDetail(BuildContext context) {
+    final color    = _kDeptColors[block.deptId] ?? Colors.grey;
+    final deptName = _kDeptNames[block.deptId]  ?? '';
+    final icon     = _kDeptIcons[block.deptId]  ?? Icons.medical_services;
+    final dur      = block.endMinutes - block.startMinutes;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(3, 0, 3, 3),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        border: Border(left: BorderSide(color: color, width: 3)),
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(4),
-          bottomRight: Radius.circular(4),
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      block.interventionName,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      deptName,
+                      style: GoogleFonts.inter(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            abbr,
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _DetailRow(
+              icon: Icons.meeting_room,
+              label: 'Sala',
+              value: 'Sala ${block.roomId}',
               color: color,
             ),
-          ),
-          Text(
-            block.timeLabel,
-            style: GoogleFonts.inter(
-              fontSize: 8,
-              color: Colors.black54,
+            _DetailRow(
+              icon: Icons.calendar_today,
+              label: 'Data',
+              value: '${block.day} ${_kMonths[month - 1]} $year',
+              color: color,
+            ),
+            _DetailRow(
+              icon: Icons.schedule,
+              label: 'Orario',
+              value: block.timeLabel,
+              color: color,
+            ),
+            _DetailRow(
+              icon: Icons.timer,
+              label: 'Durata',
+              value: _formatDuration(dur),
+              color: color,
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: FilledButton.styleFrom(backgroundColor: color),
+            child: Text(
+              'Chiudi',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
             ),
           ),
         ],
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _kDeptColors[block.deptId] ?? Colors.grey;
+
+    return GestureDetector(
+      onTap: () => _showDetail(context),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(3, 0, 3, 3),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          border: Border(left: BorderSide(color: color, width: 3)),
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(4),
+            bottomRight: Radius.circular(4),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              block.interventionName,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+            Text(
+              block.timeLabel,
+              style: GoogleFonts.inter(
+                fontSize: 8,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Dialog dettaglio riga ─────────────────────────────────────────────────────
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 10),
+          Text(
+            '$label:',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Helper ────────────────────────────────────────────────────────────────────
+
+String _formatDuration(int minutes) {
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  if (h > 0 && m > 0) return '${h}h ${m}min';
+  if (h > 0) return '${h}h';
+  return '${m}min';
 }
