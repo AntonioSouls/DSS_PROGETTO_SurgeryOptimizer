@@ -125,6 +125,16 @@ ScheduledBlock? _bestSlot(
       // Vincolo: deve terminare entro le 22:00
       if (endMin > _kEnd) continue;
 
+      // Vincolo: nessun blocco dello stesso reparto in un'altra sala può
+      // sovrapporsi temporalmente a questo slot nello stesso giorno
+      final deptOverlap = schedule.any((b) =>
+          b.deptId == task.deptId &&
+          b.day == day &&
+          b.roomId != roomId &&
+          b.startMinutes < endMin &&
+          startMin < b.endMinutes);
+      if (deptOverlap) continue;
+
       // Capacità residua dopo aver piazzato questo intervento
       final used      = slots.fold(0, (s, e) => s + (e.$2 - e.$1));
       final afterFree = _kCap - used - dur;
