@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(flutter analyze *)",
-      "Bash(flutter pub *)"
+      "Bash(flutter pub *)",
+      "Bash(grep -n \"unnecessary_brace\\\\|schedule_\\\\${\\\\|_selectedYear}\\\\|_selectedMonth}\" lib/pages/intervention_insertion_page.dart)"
     ]
   }
 }

@@ -40,8 +40,12 @@ class SurgeryOptimizer extends StatelessWidget {
           );
         }
         if (settings.name == '/scheduling') {
+          final args = settings.arguments as Map?;
           return MaterialPageRoute<void>(
-            builder: (_) => const MonthlySchedulingPage(),
+            builder: (_) => MonthlySchedulingPage(
+              initialMonth: args?['month'] as int?,
+              initialYear:  args?['year']  as int?,
+            ),
             settings: settings,
           );
         }

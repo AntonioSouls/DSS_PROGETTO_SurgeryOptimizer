@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/intervention.dart';
+import '../services/scheduler.dart';
 
 // ── Costanti ospedale ────────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ class _InterventionInsertionPageState
               },
             ),
           ),
-          _buildGeneraButton(context),
+          _buildGeneraButton(),
         ],
       ),
     );
@@ -240,7 +241,7 @@ class _InterventionInsertionPageState
 
   // ── Bottone genera programmazione ────────────────────────────────────────
 
-  Widget _buildGeneraButton(BuildContext context) {
+  Widget _buildGeneraButton() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -256,14 +257,7 @@ class _InterventionInsertionPageState
           borderRadius: BorderRadius.circular(14),
         ),
         child: FilledButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Comportamento ancora da implementare'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
+          onPressed: _handleGeneraPressed,
           icon: const Icon(Icons.auto_awesome, color: Colors.white),
           label: Text(
             'Genera Programmazione',
@@ -283,6 +277,40 @@ class _InterventionInsertionPageState
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _handleGeneraPressed() async {
+    final hasAny = _interventions.values.any((l) => l.isNotEmpty);
+    if (!hasAny) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Nessun intervento inserito per questo mese'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+
+    final schedule = generateSchedule(_selectedYear, _selectedMonth, _interventions);
+    final total = _interventions.values.fold(0, (s, l) => s + l.length);
+
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = jsonEncode(schedule.map((b) => b.toJson()).toList());
+    await prefs.setString('schedule_${_selectedYear}_$_selectedMonth', encoded);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+        '${schedule.length} di $total interventi programmati per '
+        '${_kMonths[_selectedMonth - 1]} $_selectedYear',
+      ),
+      behavior: SnackBarBehavior.floating,
+    ));
+
+    await Navigator.pushNamed(
+      context,
+      '/scheduling',
+      arguments: {'month': _selectedMonth, 'year': _selectedYear},
     );
   }
 

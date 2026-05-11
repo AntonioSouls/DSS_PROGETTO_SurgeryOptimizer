@@ -251,10 +251,8 @@ class _HeroCard extends StatelessWidget {
                         child: _CtaButtons(
                           icon: Icons.calendar_month,
                           label: 'Programmazione Mensile',
-                          onPressed: () => _showSnack(
-                            context,
-                            'Programmazione Mensile selezionata',
-                          ),
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/scheduling'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -317,17 +315,6 @@ class _CtaButtons extends StatelessWidget {
       ),
     );
   }
-}
-
-
-// PROVVISORIA
-void _showSnack(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
 }
 
 
