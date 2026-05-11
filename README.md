@@ -96,17 +96,9 @@ Displays the generated schedule for a selected month.
 
 
 
-## Departments
-
-| ID | Name | Color |
-|----|------|-------|
-| 1 | Chirurgia Generale | Green |
-| 2 | Ortopedia e Traumatologia | Blue |
-| 3 | Ginecologia | Pink |
-| 4 | Urologia | Amber |
-| 5 | Neurochirurgia | Purple |
-| 6 | Cardiochirurgia | Red |
-| 7 | Otorinolaringoiatria | Teal |
+<p align="center">
+  <img src="assets/images/VideoDemo_SurgeryOptimizer.gif" alt="VideoDemo" width="1080" />
+</p>
 
 
 
