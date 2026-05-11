@@ -142,6 +142,7 @@ class _InterventionInsertionPageState
               },
             ),
           ),
+          _buildGeneraButton(context),
         ],
       ),
     );
@@ -232,6 +233,54 @@ class _InterventionInsertionPageState
         style: GoogleFonts.inter(
           fontWeight: FontWeight.w700,
           color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  // ── Bottone genera programmazione ────────────────────────────────────────
+
+  Widget _buildGeneraButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5F7FB),
+        border: Border(top: BorderSide(color: Colors.black12)),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: FilledButton.icon(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Comportamento ancora da implementare'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+          icon: const Icon(Icons.auto_awesome, color: Colors.white),
+          label: Text(
+            'Genera Programmazione',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
         ),
       ),
     );
