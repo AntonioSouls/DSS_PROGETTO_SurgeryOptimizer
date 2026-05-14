@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/scheduled_block.dart';
+import '../services/scheduler.dart';
 
 // ── Costanti ──────────────────────────────────────────────────────────────────
 
@@ -69,6 +70,7 @@ class _MonthlySchedulingPageState extends State<MonthlySchedulingPage> {
   late int _selectedMonth;
   late int _selectedYear;
   List<ScheduledBlock> _schedule = [];
+  List<UnscheduledIntervention> _unscheduled = [];
   bool _loading = true;
 
   @override
@@ -83,13 +85,17 @@ class _MonthlySchedulingPageState extends State<MonthlySchedulingPage> {
     setState(() => _loading = true);
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString('schedule_${_selectedYear}_$_selectedMonth');
-    if (raw != null) {
-      _schedule = (jsonDecode(raw) as List)
-          .map((e) => ScheduledBlock.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } else {
-      _schedule = [];
-    }
+    _schedule = raw != null
+        ? (jsonDecode(raw) as List)
+            .map((e) => ScheduledBlock.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : [];
+    final rawU = prefs.getString('unscheduled_${_selectedYear}_$_selectedMonth');
+    _unscheduled = rawU != null
+        ? (jsonDecode(rawU) as List)
+            .map((e) => UnscheduledIntervention.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : [];
     if (mounted) setState(() => _loading = false);
   }
 
@@ -107,18 +113,21 @@ class _MonthlySchedulingPageState extends State<MonthlySchedulingPage> {
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                itemCount: 5,
+                itemCount: 6,
                 itemBuilder: (_, i) {
-                  final roomId = i + 1;
-                  final roomBlocks = _schedule
-                      .where((b) => b.roomId == roomId)
-                      .toList();
-                  return _RoomCalendarCard(
-                    roomNumber: roomId,
-                    month: _selectedMonth,
-                    year: _selectedYear,
-                    blocks: roomBlocks,
-                  );
+                  if (i < 5) {
+                    final roomId = i + 1;
+                    final roomBlocks = _schedule
+                        .where((b) => b.roomId == roomId)
+                        .toList();
+                    return _RoomCalendarCard(
+                      roomNumber: roomId,
+                      month: _selectedMonth,
+                      year: _selectedYear,
+                      blocks: roomBlocks,
+                    );
+                  }
+                  return _UnscheduledCard(unscheduled: _unscheduled);
                 },
               ),
             ),
@@ -619,6 +628,122 @@ class _DetailRow extends StatelessWidget {
                 fontWeight: FontWeight.w500,
                 color: Colors.black87,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Card interventi non programmati ──────────────────────────────────────────
+
+class _UnscheduledCard extends StatelessWidget {
+  const _UnscheduledCard({required this.unscheduled});
+
+  final List<UnscheduledIntervention> unscheduled;
+
+  @override
+  Widget build(BuildContext context) {
+    if (unscheduled.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFD97706), Color(0xFFDC2626)],
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded,
+                    color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  'Interventi non programmati',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${unscheduled.length} interventi',
+                    style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final u in unscheduled) _UnscheduledChip(item: u),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnscheduledChip extends StatelessWidget {
+  const _UnscheduledChip({required this.item});
+
+  final UnscheduledIntervention item;
+
+  @override
+  Widget build(BuildContext context) {
+    final color    = _kDeptColors[item.deptId] ?? Colors.grey;
+    final deptName = _kDeptNames[item.deptId]  ?? '';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            item.name,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          Text(
+            deptName,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              color: color.withValues(alpha: 0.8),
             ),
           ),
         ],

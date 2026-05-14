@@ -290,18 +290,24 @@ class _InterventionInsertionPageState
       return;
     }
 
-    final schedule = generateSchedule(_selectedYear, _selectedMonth, _interventions);
+    final result = generateSchedule(_selectedYear, _selectedMonth, _interventions);
     final total = _interventions.values.fold(0, (s, l) => s + l.length);
 
     final prefs = await SharedPreferences.getInstance();
-    final encoded = jsonEncode(schedule.map((b) => b.toJson()).toList());
-    await prefs.setString('schedule_${_selectedYear}_$_selectedMonth', encoded);
+    await prefs.setString(
+      'schedule_${_selectedYear}_$_selectedMonth',
+      jsonEncode(result.scheduled.map((b) => b.toJson()).toList()),
+    );
+    await prefs.setString(
+      'unscheduled_${_selectedYear}_$_selectedMonth',
+      jsonEncode(result.unscheduled.map((u) => u.toJson()).toList()),
+    );
 
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
-        '${schedule.length} di $total interventi programmati per '
+        '${result.scheduled.length} di $total interventi programmati per '
         '${_kMonths[_selectedMonth - 1]} $_selectedYear',
       ),
       behavior: SnackBarBehavior.floating,

@@ -1,6 +1,20 @@
 import '../models/intervention.dart';
 import '../models/scheduled_block.dart';
 
+class UnscheduledIntervention {
+  final int deptId;
+  final String name;
+  const UnscheduledIntervention({required this.deptId, required this.name});
+
+  Map<String, dynamic> toJson() => {'deptId': deptId, 'name': name};
+
+  factory UnscheduledIntervention.fromJson(Map<String, dynamic> json) =>
+      UnscheduledIntervention(
+        deptId: json['deptId'] as int,
+        name: json['name'] as String,
+      );
+}
+
 // ── Costanti orario ───────────────────────────────────────────────────────────
 
 const int _kStart   = 8 * 60;             // 08:00 → 480 min
@@ -29,7 +43,8 @@ typedef _Usage = Map<int, Map<int, List<(int, int, int)>>>;
 ///           decreasing. Come secondo obiettivo, preferisce giorni in cui il
 ///           reparto è già presente, minimizzando i giorni operativi distinti
 ///           (e quindi il massimo tra i reparti).
-List<ScheduledBlock> generateSchedule(
+({List<ScheduledBlock> scheduled, List<UnscheduledIntervention> unscheduled})
+    generateSchedule(
   int year,
   int month,
   Map<int, List<Intervention>> byDept,
@@ -52,7 +67,7 @@ List<ScheduledBlock> generateSchedule(
   ]..sort((a, b) =>
       b.intervention.totalMinutes.compareTo(a.intervention.totalMinutes));
 
-  if (tasks.isEmpty) return schedule;
+  if (tasks.isEmpty) return (scheduled: schedule, unscheduled: []);
 
   final remaining = List<_Task>.from(tasks);
 
@@ -85,6 +100,7 @@ List<ScheduledBlock> generateSchedule(
   }
 
   // ── Phase 2: massimizzazione utilizzo ────────────────────────────────────
+  final unscheduled = <UnscheduledIntervention>[];
   final allDays = List.generate(daysInMonth, (i) => i + 1);
   for (final task in List<_Task>.from(remaining)) {
     final slot = _bestSlot(task, allDays, usage, schedule);
@@ -92,10 +108,14 @@ List<ScheduledBlock> generateSchedule(
       schedule.add(slot);
       _apply(slot, usage);
       remaining.remove(task);
+    } else {
+      unscheduled.add(
+        UnscheduledIntervention(deptId: task.deptId, name: task.intervention.name),
+      );
     }
   }
 
-  return schedule;
+  return (scheduled: schedule, unscheduled: unscheduled);
 }
 
 // ── Selezione slot ottimale ───────────────────────────────────────────────────
