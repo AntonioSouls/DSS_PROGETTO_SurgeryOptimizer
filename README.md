@@ -2,7 +2,7 @@
 
 # SURGERY OPTIMIZER
 
-**A Flutter application for planning and optimizing monthly surgical schedules across hospital operating rooms.**
+**A Flutter application for Planning and Optimizing Monthly Surgical Schedules across hospital operating rooms.**
 
 *Developed as a project for the **Decision Support System and Analytics** course.*
 
@@ -11,88 +11,24 @@
 
 ## Overview
 
-Surgery Optimizer is a cross-platform Flutter application designed to assist hospital staff in managing and scheduling surgical interventions across multiple operating rooms. It provides a structured workflow: first, interventions are entered for each department and month; then a smart scheduling algorithm automatically distributes them across the available operating rooms, respecting a set of clinical and operational constraints.
+**Surgery Optimizer** is a cross-platform Flutter application designed to assist hospital staff in managing and scheduling surgical interventions across multiple operating rooms.  
+It provides a structured workflow: 
+1. Interventions are entered for each department and month; 
+2. Then a smart scheduling algorithm automatically distributes them across the available operating rooms, respecting a set of clinical and operational constraints;  
 
 The application currently targets **web** (Flutter Web), with the architecture ready for mobile and desktop deployment as well.
 
 
+## How it Works
 
-## Features
+When the application starts, it lands on the **Home Page**, which presents two main navigation options: 
+1. **Intervention Insertion Page**, leading to the intervention management page;
+2. **Monthly Scheduling Page**, leading to the monthly schedule calendar;
 
-- **Department-based intervention management** — 7 surgical departments, each with its own color and icon, independently managing their list of planned interventions.
-- **Month/year scoping** — each month stores a completely separate set of interventions; switching period instantly reloads the relevant data.
-- **Persistent storage** — all interventions and generated schedules are saved locally via `shared_preferences` and survive navigation and app restarts.
-- **Automatic schedule generation** — a greedy two-phase algorithm distributes interventions across 5 operating rooms, optimizing utilization while satisfying hard constraints.
-- **Interactive monthly calendar** — one calendar grid per operating room, showing each intervention as a color-coded chip with name and time range. Tapping a chip opens a detailed popup.
+On the **Intervention Insertion Page**, hospital staff begin by selecting a target month and year from a dropdown at the top of the screen. Each period is completely isolated, so switching to a different month loads that month's own set of interventions without affecting any other. The page then shows one card per surgical department, each displaying its name, icon, the number of planned interventions for the selected period, and their average duration. From any department card, staff can tap **Add Intervention** to open a dialog where they fill in the intervention name (up to 80 characters), choose its duration via separate hour and minute selectors, and pick which operating rooms it is compatible with. The form validates inline — a name is required, the duration must be at least 5 minutes, and at least one room must be selected. Once all interventions for the month have been entered, tapping **Generate Scheduling** at the bottom of the page runs the `Scheduling Algorithm`, saves the result, and automatically navigates to the monthly calendar for that period.
 
+The **Monthly Scheduling Page** presents the generated schedule through one calendar card per operating room (Room 1–5). Each card contains a full monthly grid where every day cell can hold one or more color-coded intervention chips — the color identifies the department, and each chip shows the intervention name alongside its time range (e.g. `8:00–9:30`). Weekend days are visually dimmed to make working days stand out at a glance. Tapping any chip opens a detail popup that summarises all the relevant information: department, operating room, date, time range, and total duration. The same period selector from the insertion page is available here too, allowing staff to browse the saved schedules for any past or future month.
 
-
-## Application Structure
-
-```
-lib/
-├── main.dart                              # App entry point, routing
-├── models/
-│   ├── intervention.dart                  # Intervention data model
-│   └── scheduled_block.dart               # Scheduled surgery block model
-├── pages/
-│   ├── home_page.dart                     # Home  /landing page
-│   ├── intervention_insertion_page.dart   # Intervention management page
-│   ├── monthly_scheduling_page.dart       # Monthly calendar view
-│   └── not_found_page.dart                # 404 fallback page
-└── services/
-    └── scheduler.dart                     # Scheduling algorithm
-```
-
-
-
-## Pages
-
-### Home Page (`/`)
-
-The landing page with two main navigation options:
-
-- **Inserimento Interventi** — opens the intervention management page.
-- **Programmazione Mensile** — opens the monthly schedule calendar.
-
-### Intervention Insertion Page (`/interventions`)
-
-Where hospital staff enter planned surgical interventions for a given month.
-
-**Period selector** — a dropdown at the top lets you select month and year. Data is completely isolated per period: selecting a different month loads (or starts fresh with) that month's interventions.
-
-**Department cards** — one card per department, showing:
-- Department name with its icon.
-- A badge showing the number of planned interventions for the selected month.
-- A badge showing the average intervention duration.
-- The list of added interventions, each displaying name, duration, and compatible operating rooms.
-- A delete button for each intervention.
-- An "Aggiungi intervento" button to open the insertion dialog.
-
-**Add intervention dialog** — a modal with:
-- Name of the intervention (max 80 characters).
-- Duration selector (hours: 0–14, minutes: 0, 5, 10, … 55).
-- Compatible operating room selector (multi-select chips for Sala 1–5).
-- Inline validation: name required, duration ≥ 5 minutes, at least one room selected.
-
-**"Genera Programmazione" button** — at the bottom of the page. Runs the scheduling algorithm on all interventions of the selected month, saves the resulting schedule, shows a summary snackbar, and navigates directly to the monthly calendar for that month.
-
-### Monthly Scheduling Page (`/scheduling`)
-
-Displays the generated schedule for a selected month.
-
-**Period selector** — same month/year dropdown as the intervention page; switching period reloads the saved schedule for that month.
-
-**Room calendar cards** — one card per operating room (Sala 1–5), each containing a full monthly calendar grid with:
-- Day-of-week headers (Mon–Sun).
-- Each day cell showing the day number and all interventions scheduled in that room on that day.
-- Interventions rendered as color-coded chips (color = department color) with the intervention name and time range (e.g. `8:00-9:30`).
-- Weekend days visually dimmed.
-
-**Intervention detail popup** — tapping any intervention chip opens an `AlertDialog` with:
-- A colored header (department color) showing the department icon, intervention name, and department name.
-- Detail rows: operating room, date, time range, duration.
-- A "Chiudi" button in the department color.
 
 ## Scheduling Algorithm
 
@@ -137,6 +73,33 @@ A `(room, day)` slot is considered only if all of the following hold:
 Interventions are placed back-to-back within each room (no idle gaps between consecutive blocks).
 
 
+## Application Structure
+
+The project is structured as follows:
+
+```
+lib/
+├── main.dart                              # App entry point, routing
+├── models/
+│   ├── intervention.dart                  # Intervention data model
+│   └── scheduled_block.dart               # Scheduled surgery block model
+├── pages/
+│   ├── home_page.dart                     # Home  /landing page
+│   ├── intervention_insertion_page.dart   # Intervention management page
+│   ├── monthly_scheduling_page.dart       # Monthly calendar view
+│   └── not_found_page.dart                # 404 fallback page
+└── services/
+    └── scheduler.dart                     # Scheduling algorithm
+```
+
+- **`main.dart`** — application entry point; defines the routing table and maps URL paths to the corresponding pages.
+- **`models/intervention.dart`** — data model representing a single planned surgical intervention, holding its name, duration, department, and list of compatible operating rooms.
+- **`models/scheduled_block.dart`** — data model representing a surgery block that has been placed in the schedule, adding room assignment, date, and computed start/end times to an intervention.
+- **`pages/home_page.dart`** — landing page shown at startup; provides the two main navigation buttons to reach the intervention insertion and monthly scheduling pages.
+- **`pages/intervention_insertion_page.dart`** — manages the list of planned interventions for a selected month; allows staff to add or delete interventions per department and triggers schedule generation.
+- **`pages/monthly_scheduling_page.dart`** — displays the generated schedule as a monthly calendar grid, one card per operating room, with color-coded intervention chips and a detail popup.
+- **`pages/not_found_page.dart`** — fallback page rendered when an unknown route is requested (404).
+- **`services/scheduler.dart`** — contains the greedy two-phase scheduling algorithm that distributes interventions across operating rooms while satisfying all clinical and operational constraints.
 
 ## Data Persistence
 
@@ -194,35 +157,6 @@ flutter run -d chrome --web-port 8080
 # Build for web production
 flutter build web
 ```
-
-
-
-## How to Use
-
-### 1. Enter interventions
-
-1. Navigate to **Inserimento Interventi** from the home page.
-2. Select the target **month and year** from the period selector at the top.
-3. For each surgical department, tap **Aggiungi intervento**.
-4. Fill in the intervention name, duration, and the operating rooms it is compatible with.
-5. Tap **Aggiungi intervento** in the dialog to confirm. The intervention appears in the department card and is saved immediately.
-6. Repeat for all departments and interventions needed for the month.
-
-### 2. Generate the schedule
-
-1. Once interventions are entered, tap **Genera Programmazione** at the bottom of the page.
-2. The algorithm runs instantly and saves the resulting schedule.
-3. A snackbar confirms how many interventions were successfully scheduled out of the total.
-4. The app automatically navigates to the monthly calendar for the selected period.
-
-### 3. View the schedule
-
-1. The **Programmazione Mensile** page shows one calendar card per operating room.
-2. Each card contains a full monthly grid with color-coded intervention chips.
-3. Tap any chip to open the detail popup showing room, date, time range, and duration.
-4. Use the period selector to browse schedules for other months.
-
-
 
 ## Project Status
 
