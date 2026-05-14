@@ -3,11 +3,10 @@ import '../models/scheduled_block.dart';
 
 // ── Costanti orario ───────────────────────────────────────────────────────────
 
-const int _kStart    = 8 * 60;             // 08:00 → 480 min
-const int _kEnd      = 22 * 60;            // 22:00 → 1320 min
-const int _kCap      = _kEnd - _kStart;    // 840 min/giorno
-const int _kMaxPerDay = 3;                 // max interventi per sala per giorno
-const int _kNumRooms  = 5;
+const int _kStart   = 8 * 60;             // 08:00 → 480 min
+const int _kEnd     = 22 * 60;            // 22:00 → 1320 min
+const int _kCap     = _kEnd - _kStart;    // 840 min/giorno
+const int _kNumRooms = 5;
 
 // ── Tipi interni ──────────────────────────────────────────────────────────────
 
@@ -17,8 +16,8 @@ class _Task {
   _Task(this.deptId, this.intervention);
 }
 
-/// usage[roomId][day] = lista di (startMin, endMin)
-typedef _Usage = Map<int, Map<int, List<(int, int)>>>;
+/// usage[roomId][day] = lista di (startMin, endMin, deptId)
+typedef _Usage = Map<int, Map<int, List<(int, int, int)>>>;
 
 // ── Algoritmo principale ──────────────────────────────────────────────────────
 
@@ -115,15 +114,18 @@ ScheduledBlock? _bestSlot(
     for (final day in candidateDays) {
       final slots = usage[roomId]![day]!;
 
-      // Vincolo: max 3 interventi per sala per giorno
-      if (slots.length >= _kMaxPerDay) continue;
-
       // Lo slot inizia subito dopo l'ultimo intervento (o alle 8:00)
       final startMin = slots.isEmpty ? _kStart : slots.last.$2;
       final endMin   = startMin + dur;
 
       // Vincolo: deve terminare entro le 22:00
       if (endMin > _kEnd) continue;
+
+      // Vincolo consecutività: se il reparto ha già interventi in questa
+      // sala+giorno, l'ultimo slot della sala deve appartenergli —
+      // altrimenti si interromperebbe la sequenza di un altro reparto.
+      final deptInRoom = slots.any((s) => s.$3 == task.deptId);
+      if (deptInRoom && slots.last.$3 != task.deptId) continue;
 
       // Vincolo: nessun blocco dello stesso reparto in un'altra sala può
       // sovrapporsi temporalmente a questo slot nello stesso giorno
@@ -165,5 +167,5 @@ ScheduledBlock? _bestSlot(
 }
 
 void _apply(ScheduledBlock b, _Usage usage) {
-  usage[b.roomId]![b.day]!.add((b.startMinutes, b.endMinutes));
+  usage[b.roomId]![b.day]!.add((b.startMinutes, b.endMinutes, b.deptId));
 }

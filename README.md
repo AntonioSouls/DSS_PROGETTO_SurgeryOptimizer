@@ -36,7 +36,7 @@ lib/
 │   ├── intervention.dart                  # Intervention data model
 │   └── scheduled_block.dart               # Scheduled surgery block model
 ├── pages/
-│   ├── home_page.dart                     # Home / landing page
+│   ├── home_page.dart                     # Home  /landing page
 │   ├── intervention_insertion_page.dart   # Intervention management page
 │   ├── monthly_scheduling_page.dart       # Monthly calendar view
 │   └── not_found_page.dart                # 404 fallback page
@@ -94,14 +94,6 @@ Displays the generated schedule for a selected month.
 - Detail rows: operating room, date, time range, duration.
 - A "Chiudi" button in the department color.
 
-
-
-<p align="center">
-  <img src="assets/images/VideoDemo_SurgeryOptimizer.gif" alt="VideoDemo" width="1080" />
-</p>
-
-
-
 ## Scheduling Algorithm
 
 The algorithm is implemented in [lib/services/scheduler.dart](lib/services/scheduler.dart) and uses a **greedy two-phase heuristic** inspired by the bin-packing problem.
@@ -111,10 +103,10 @@ The algorithm is implemented in [lib/services/scheduler.dart](lib/services/sched
 | Parameter | Value |
 |-----------|-------|
 | Operating hours | 08:00 – 22:00 (840 min/day) |
-| Max interventions per room per day | 3 |
 | Operating rooms | 5 (Sala 1–5) |
 | Min interventions per department per week | 1 |
 | Department time overlap across rooms | Not allowed |
+| Same-department interventions in same room/day | Must be consecutive (no other dept in between) |
 
 ### Phase 1 — Weekly constraint satisfaction
 
@@ -137,10 +129,10 @@ score = -afterFree + (deptAlreadyOnDay ? 100 : 0)
 
 A `(room, day)` slot is considered only if all of the following hold:
 
-1. The room has fewer than 3 interventions already scheduled that day.
-2. The intervention fits within the 22:00 cutoff (start of last block + duration ≤ 1320 min).
-3. The room is in the intervention's list of compatible rooms.
-4. No other block of the **same department** in any **other room** on the same day overlaps with the proposed time window (`s1 < e2 && s2 < e1`).
+1. The intervention fits within the 22:00 cutoff (start of last block + duration ≤ 1320 min).
+2. The room is in the intervention's list of compatible rooms.
+3. No other block of the **same department** in any **other room** on the same day overlaps with the proposed time window (`s1 < e2 && s2 < e1`).
+4. **Consecutiveness**: if the department already has at least one intervention in this room on this day, the last slot currently occupying the room must belong to the same department. This guarantees that all interventions of a given department in a given room on a given day form an uninterrupted block — no other department can be inserted in between.
 
 Interventions are placed back-to-back within each room (no idle gaps between consecutive blocks).
 
