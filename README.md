@@ -162,6 +162,10 @@ flutter build web
 
 This project is currently in active development. The core workflow (intervention entry → automatic scheduling → calendar visualization) is fully functional. Planned future improvements may include export to PDF/Excel, manual schedule editing, and multi-user support.
 
+## Presentation
+
+For a more detailed overview of the project — including design choices, algorithm walkthrough, and results — please refer to the slide presentation available in the root of the repository: [presentation.pdf](presentation.pdf).
+
 ## Authors
 <a href="https://github.com/AntonioSouls">
   <img src="https://github.com/AntonioSouls.png" width="80">
