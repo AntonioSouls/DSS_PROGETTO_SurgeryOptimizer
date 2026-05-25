@@ -147,7 +147,6 @@ class _AppHeader extends StatelessWidget {
               color: const Color(0xFF0A66C2),
             ),
           ),
-          SizedBox(width: isNarrow ? 0 : 40),
         ],
       ),
     );
