@@ -1,10 +1,12 @@
 import 'dart:convert';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/seed_data.dart';
 import '../models/intervention.dart';
 import '../services/scheduler.dart';
 
@@ -70,16 +72,34 @@ class _InterventionInsertionPageState
     _loadFromStorage();
   }
 
+  // Carica un reparto da localStorage; se mancante, cerca nel seed e lo persiste.
+  void _loadDept(int deptId) {
+    final raw = html.window.localStorage[_storageKey(deptId)];
+    if (raw != null) {
+      _interventions[deptId] = (jsonDecode(raw) as List)
+          .map((e) => Intervention.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return;
+    }
+    final seedKey = '${_selectedYear}_${_selectedMonth}_$deptId';
+    final seedList = kSeedData[seedKey];
+    if (seedList != null) {
+      _interventions[deptId] = seedList
+          .map((m) => Intervention(
+                name: m['name'] as String,
+                hours: m['hours'] as int,
+                minutes: m['minutes'] as int,
+                compatibleRoomIds:
+                    List<int>.from(m['compatibleRoomIds'] as List),
+              ))
+          .toList();
+      _saveToStorage(deptId); // salva in localStorage per le sessioni future
+    }
+  }
+
   Future<void> _loadFromStorage() async {
-    final prefs = await SharedPreferences.getInstance();
     for (final dept in _kDepartments) {
-      final raw = prefs.getString(_storageKey(dept.id));
-      if (raw != null) {
-        final list = (jsonDecode(raw) as List)
-            .map((e) => Intervention.fromJson(e as Map<String, dynamic>))
-            .toList();
-        _interventions[dept.id] = list;
-      }
+      _loadDept(dept.id);
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -89,25 +109,17 @@ class _InterventionInsertionPageState
       _interventions[d.id] = [];
     }
     setState(() {});
-    final prefs = await SharedPreferences.getInstance();
     for (final dept in _kDepartments) {
-      final raw = prefs.getString(_storageKey(dept.id));
-      if (raw != null) {
-        final list = (jsonDecode(raw) as List)
-            .map((e) => Intervention.fromJson(e as Map<String, dynamic>))
-            .toList();
-        _interventions[dept.id] = list;
-      }
+      _loadDept(dept.id);
     }
     if (mounted) setState(() {});
   }
 
-  Future<void> _saveToStorage(int deptId) async {
-    final prefs = await SharedPreferences.getInstance();
+  void _saveToStorage(int deptId) {
     final encoded = jsonEncode(
       _interventions[deptId]!.map((e) => e.toJson()).toList(),
     );
-    await prefs.setString(_storageKey(deptId), encoded);
+    html.window.localStorage[_storageKey(deptId)] = encoded;
   }
 
   @override
@@ -138,6 +150,7 @@ class _InterventionInsertionPageState
                   onDelete: (idx) {
                     setState(() => _interventions[dept.id]!.removeAt(idx));
                     _saveToStorage(dept.id);
+                    _regenerateSchedule();
                   },
                 );
               },
@@ -280,6 +293,26 @@ class _InterventionInsertionPageState
     );
   }
 
+  ({int scheduled, int total})? _regenerateSchedule() {
+    final hasAny = _interventions.values.any((l) => l.isNotEmpty);
+
+    if (!hasAny) {
+      html.window.localStorage.remove('schedule_${_selectedYear}_$_selectedMonth');
+      html.window.localStorage.remove('unscheduled_${_selectedYear}_$_selectedMonth');
+      return null;
+    }
+
+    final result = generateSchedule(_selectedYear, _selectedMonth, _interventions);
+    final total = _interventions.values.fold(0, (s, l) => s + l.length);
+
+    html.window.localStorage['schedule_${_selectedYear}_$_selectedMonth'] =
+        jsonEncode(result.scheduled.map((b) => b.toJson()).toList());
+    html.window.localStorage['unscheduled_${_selectedYear}_$_selectedMonth'] =
+        jsonEncode(result.unscheduled.map((u) => u.toJson()).toList());
+
+    return (scheduled: result.scheduled.length, total: total);
+  }
+
   Future<void> _handleGeneraPressed() async {
     final hasAny = _interventions.values.any((l) => l.isNotEmpty);
     if (!hasAny) {
@@ -290,24 +323,13 @@ class _InterventionInsertionPageState
       return;
     }
 
-    final result = generateSchedule(_selectedYear, _selectedMonth, _interventions);
-    final total = _interventions.values.fold(0, (s, l) => s + l.length);
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'schedule_${_selectedYear}_$_selectedMonth',
-      jsonEncode(result.scheduled.map((b) => b.toJson()).toList()),
-    );
-    await prefs.setString(
-      'unscheduled_${_selectedYear}_$_selectedMonth',
-      jsonEncode(result.unscheduled.map((u) => u.toJson()).toList()),
-    );
+    final counts = _regenerateSchedule();
 
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
-        '${result.scheduled.length} di $total interventi programmati per '
+        '${counts!.scheduled} di ${counts.total} interventi programmati per '
         '${_kMonths[_selectedMonth - 1]} $_selectedYear',
       ),
       behavior: SnackBarBehavior.floating,
@@ -380,7 +402,10 @@ class _InterventionInsertionPageState
                             value: hours,
                             items: List.generate(15, (i) => i),
                             label: (v) => '$v h',
-                            onChanged: (v) => setLocal(() => hours = v),
+                            onChanged: (v) => setLocal(() {
+                              hours = v;
+                              if (hours == 14) minutes = 0;
+                            }),
                           ),
                         ],
                       ),
@@ -395,11 +420,10 @@ class _InterventionInsertionPageState
                                   fontSize: 11, color: Colors.black54)),
                           const SizedBox(height: 4),
                           _DurationDropdown(
-                            value: minutes,
-                            items: [
-                              0, 5, 10, 15, 20, 25, 30,
-                              35, 40, 45, 50, 55,
-                            ],
+                            value: hours == 14 ? 0 : minutes,
+                            items: hours == 14
+                                ? [0]
+                                : [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
                             label: (v) => '$v min',
                             onChanged: (v) => setLocal(() => minutes = v),
                           ),

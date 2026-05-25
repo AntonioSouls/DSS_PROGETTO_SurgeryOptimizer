@@ -1,8 +1,9 @@
 import 'dart:convert';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/scheduled_block.dart';
 import '../services/scheduler.dart';
@@ -81,16 +82,15 @@ class _MonthlySchedulingPageState extends State<MonthlySchedulingPage> {
     _loadSchedule();
   }
 
-  Future<void> _loadSchedule() async {
+  void _loadSchedule() {
     setState(() => _loading = true);
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('schedule_${_selectedYear}_$_selectedMonth');
+    final raw = html.window.localStorage['schedule_${_selectedYear}_$_selectedMonth'];
     _schedule = raw != null
         ? (jsonDecode(raw) as List)
             .map((e) => ScheduledBlock.fromJson(e as Map<String, dynamic>))
             .toList()
         : [];
-    final rawU = prefs.getString('unscheduled_${_selectedYear}_$_selectedMonth');
+    final rawU = html.window.localStorage['unscheduled_${_selectedYear}_$_selectedMonth'];
     _unscheduled = rawU != null
         ? (jsonDecode(rawU) as List)
             .map((e) => UnscheduledIntervention.fromJson(e as Map<String, dynamic>))
