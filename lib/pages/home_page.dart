@@ -112,18 +112,37 @@ class _AppHeader extends StatelessWidget {
           ),
           SizedBox(width: isNarrow ? 10 : 15),
           Flexible(
-            child: Text(
-              'Surgery Optimizer',
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: titleFontSize,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.4,
-                foreground: Paint()
-                  ..shader = const LinearGradient(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
                     colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
-                  ).createShader(const Rect.fromLTWH(0, 0, 300, 70)),
-              ),
+                  ).createShader(bounds),
+                  child: Text(
+                    'SURGERY',
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: titleFontSize,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Text(
+                  'Optimizer',
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: titleFontSize * 0.55,
+                    fontWeight: FontWeight.w800,
+                    fontStyle: FontStyle.italic,
+                    letterSpacing: 0.2,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
             ),
           ),
           const Spacer(),
