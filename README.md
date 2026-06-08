@@ -164,7 +164,7 @@ This project is currently in active development. The core workflow (intervention
 
 ## Presentation
 
-For a more detailed overview of the project — including design choices, algorithm walkthrough, and results — please refer to the slide presentation available in the root of the repository: [presentation.pdf](presentation.pdf).
+For a more detailed overview of the project — including design choices, algorithm walkthrough, and results — please refer to the slide presentation available here: [Presentazione SurgeryOptimizer](/assets/Presentazione%20SurgeryOptimizer.pptx).
 
 ## Authors
 <a href="https://github.com/AntonioSouls">
