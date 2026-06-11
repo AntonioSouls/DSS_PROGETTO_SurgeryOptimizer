@@ -98,6 +98,21 @@ class _InterventionInsertionPageState
   }
 
   Future<void> _loadFromStorage() async {
+    // Se la versione del seed è cambiata, svuota tutti i dati in localStorage
+    // e ricarica dal seed aggiornato.
+    if (html.window.localStorage['seed_version'] != kSeedVersion) {
+      final toRemove = html.window.localStorage.keys
+          .where((k) =>
+              k.startsWith('dept_interventions_') ||
+              k.startsWith('schedule_') ||
+              k.startsWith('unscheduled_'))
+          .toList();
+      for (final k in toRemove) {
+        html.window.localStorage.remove(k);
+      }
+      html.window.localStorage['seed_version'] = kSeedVersion;
+    }
+
     for (final dept in _kDepartments) {
       _loadDept(dept.id);
     }

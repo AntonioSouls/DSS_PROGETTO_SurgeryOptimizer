@@ -261,26 +261,44 @@ class _HeroCard extends StatelessWidget {
                         onPressed: () =>
                             Navigator.pushNamed(context, '/interventions'),
                       ),
+                      const SizedBox(height: 12),
+                      _CtaButtons(
+                        icon: Icons.bar_chart,
+                        label: 'Statistiche Scheduling',
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/statistics'),
+                      ),
                     ],
                   )
-                : Row(
+                : Column(
                     children: [
-                      Expanded(
-                        child: _CtaButtons(
-                          icon: Icons.calendar_month,
-                          label: 'Programmazione Mensile',
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/scheduling'),
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _CtaButtons(
+                              icon: Icons.calendar_month,
+                              label: 'Programmazione Mensile',
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/scheduling'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _CtaButtons(
+                              icon: Icons.playlist_add,
+                              label: 'Inserimento Interventi',
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/interventions'),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _CtaButtons(
-                          icon: Icons.playlist_add,
-                          label: 'Inserimento Interventi',
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/interventions'),
-                        ),
+                      const SizedBox(height: 12),
+                      _CtaButtons(
+                        icon: Icons.bar_chart,
+                        label: 'Statistiche Scheduling',
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/statistics'),
                       ),
                     ],
                   ),

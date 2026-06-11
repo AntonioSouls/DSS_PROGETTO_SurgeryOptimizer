@@ -3,6 +3,7 @@ import 'package:surgery_optimizer/pages/home_page.dart';
 import 'package:surgery_optimizer/pages/intervention_insertion_page.dart';
 import 'package:surgery_optimizer/pages/monthly_scheduling_page.dart';
 import 'package:surgery_optimizer/pages/not_found_page.dart';
+import 'package:surgery_optimizer/pages/statistics_page.dart';
 
 // STARTER DELL'APP
 void main() {
@@ -46,6 +47,12 @@ class SurgeryOptimizer extends StatelessWidget {
               initialMonth: args?['month'] as int?,
               initialYear:  args?['year']  as int?,
             ),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/statistics') {
+          return MaterialPageRoute<void>(
+            builder: (_) => const StatisticsPage(),
             settings: settings,
           );
         }
